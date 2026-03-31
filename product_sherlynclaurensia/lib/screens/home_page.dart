@@ -12,6 +12,7 @@ class HomePage extends StatefulWidget {
 class HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
   List<Product> _allProducts = [];
+  bool isLoading = true;
   String selectedCategory = 'All';
 
   @override
@@ -28,10 +29,12 @@ class HomePageState extends State<HomePage> {
 
       setState(() {
         _allProducts = allProductsData.map((e) => Product.fromJson(e)).toList();
+        isLoading = false;
       });
     } catch (e) {
       setState(() {
         _allProducts = [];
+        isLoading = false;
       });
       // error handling could be done with snackbar or dialog if needed
     }
@@ -43,46 +46,38 @@ class HomePageState extends State<HomePage> {
         ? _allProducts
         : _allProducts.where((p) => p.category == selectedCategory).toList();
 
-    final categories = [
-      'All',
-      ...{for (var p in _allProducts) p.category},
-    ];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Products'),
         actions: [
-          PopupMenuButton<String>(
+          IconButton(
             icon: const Icon(Icons.filter_list),
-            onSelected: (value) {
+            onPressed: () {
               setState(() {
-                selectedCategory = value;
+                selectedCategory = selectedCategory == 'All'
+                    ? 'electronics'
+                    : 'All';
               });
-            },
-            itemBuilder: (context) {
-              return categories
-                  .map(
-                    (category) => PopupMenuItem<String>(
-                      value: category,
-                      child: Text(category),
-                    ),
-                  )
-                  .toList();
             },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                  ),
+                  _buildProductsList('All Products', filteredProducts),
+                ],
+              ),
             ),
-            _buildProductsList('All Products', filteredProducts),
-          ],
-        ),
-      ),
     );
   }
 
